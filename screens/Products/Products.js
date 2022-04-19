@@ -1,12 +1,66 @@
 import { React, useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, Alert } from "react-native";
-import { Text, TextInput, DataTable } from "react-native-paper";
+import {
+  StyleSheet,
+  View,
+  Alert,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  Text,
+  Dimensions,
+} from "react-native";
 import * as SQLite from "expo-sqlite";
-import { Button } from "react-native-paper";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Colors, Styles } from "../../styles/styles";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system";
+import ExcelJS from "exceljs";
+import { Buffer } from "buffer";
+//import Barcode from "@kichiyaki/react-native-barcode-generator";
 
 const Separator = () => <View style={styles.separator} />;
 const Stack = createNativeStackNavigator();
+
+const Button = ({ title, onPress, iconName }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    style={{
+      backgroundColor: Colors.yes,
+      padding: 5,
+      margin: 5,
+      borderRadius: 5,
+    }}
+  >
+    <View
+      style={{
+        flexDirection: "row",
+        height: 40,
+      }}
+    >
+      <Ionicons
+        name={iconName}
+        style={{
+          margin: 5,
+          padding: 5,
+          fontSize: 20,
+          color: Colors.white,
+        }}
+      />
+      <Text
+        style={{
+          margin: 5,
+          padding: 5,
+          fontSize: 15,
+          color: Colors.white,
+          fontWeight: "bold",
+        }}
+      >
+        {title}
+      </Text>
+    </View>
+  </TouchableOpacity>
+);
 
 function openDatabase() {
   if (Platform.OS === "web") {
@@ -27,20 +81,36 @@ const db = openDatabase();
 export default function Products({ navigation }) {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Productos" component={NewScreen} />
-      <Stack.Screen name="Lista de Productos" component={ListScreen} />
+      <Stack.Screen
+        name="newScreen"
+        component={NewScreen}
+        options={{
+          title: "Nuevo",
+        }}
+      />
+      <Stack.Screen
+        name="listScreen"
+        component={ListScreen}
+        options={{
+          headerTitle: "Productos",
+        }}
+      />
     </Stack.Navigator>
   );
 }
 function ListScreen({ navigation }) {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
   const fetchData = () => {
     db.transaction((tx) => {
       tx.executeSql(
         "SELECT * FROM products",
         [],
-        (txObj, { rows: { _array } }) => setProducts(_array),
+        (txObj, { rows: { _array } }) => {
+          setProducts(_array);
+          setFilteredProducts(_array);
+        },
         (txObj, error) => console.log("Error ", error)
       );
     });
@@ -50,29 +120,123 @@ function ListScreen({ navigation }) {
     fetchData();
   }, []);
 
+  const items = ({ item }) => (
+    <View
+      style={{
+        flex: 1,
+        borderColor: Colors.title,
+        borderWidth: 0.5,
+        padding: 5,
+        backgroundColor: Colors.white,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: "bold",
+        }}
+      >
+        {item.name}
+      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* <Barcode
+          style={{
+            fontSize: 5,
+          }}
+          format="CODE128B"
+          value={item.barcode}
+          text={item.barcode}
+          width={1.25}
+          height={25}
+        /> */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <Text
+            style={{
+              fontWeight: "bold",
+            }}
+          >
+            {" "}
+            Código:
+          </Text>
+          <Text>{item.barcode}</Text>
+          <Text
+            style={{
+              fontWeight: "bold",
+            }}
+          >
+            {" "}
+            Piezas:
+          </Text>
+          <Text>{item.quantity}</Text>
+          <Text
+            style={{
+              fontWeight: "bold",
+            }}
+          >
+            {" "}
+            Precio:
+          </Text>
+          <Text>${item.price}</Text>
+        </View>
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+        }}
+      >
+        <Text
+          style={{
+            fontWeight: "bold",
+          }}
+        >
+          {" "}
+          Descripción:
+        </Text>
+        <Text>{item.description}</Text>
+      </View>
+    </View>
+  );
+  const onChangeBuscar = (text) => {
+    if (text === "") {
+      setFilteredProducts(products);
+    } else {
+      setFilteredProducts(
+        products.filter((product) =>
+          product.name.toLowerCase().includes(text.toLowerCase())
+        )
+      );
+    }
+  };
   return (
-    <ScrollView style={styles.container}>
-      <DataTable>
-        <DataTable.Header>
-          <DataTable.Title>Nombre</DataTable.Title>
-          <DataTable.Title>Código</DataTable.Title>
-          <DataTable.Title>Descripción</DataTable.Title>
-          <DataTable.Title>Piezas</DataTable.Title>
-          <DataTable.Title>Precio</DataTable.Title>
-        </DataTable.Header>
-        {products.map((product) => {
-          return (
-            <DataTable.Row key={product.id}>
-              <DataTable.Cell>{product.name}</DataTable.Cell>
-              <DataTable.Cell>{product.barcode}</DataTable.Cell>
-              <DataTable.Cell>{product.description}</DataTable.Cell>
-              <DataTable.Cell>{product.quantity}</DataTable.Cell>
-              <DataTable.Cell>{product.price}</DataTable.Cell>
-            </DataTable.Row>
-          );
-        })}
-      </DataTable>
-    </ScrollView>
+    <View
+      style={{
+        paddingTop: 0,
+        paddingHorizontal: 10,
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      <TextInput
+        style={Styles.inputs}
+        placeholder="Buscar"
+        onChangeText={onChangeBuscar}
+      />
+      <FlatList
+        data={filteredProducts}
+        renderItem={items}
+        keyExtractor={(item) => item.id}
+      />
+    </View>
   );
 }
 
@@ -92,6 +256,7 @@ export function NewScreen({ navigation }) {
       setCanSave(false);
     }
   });
+
   const clearForm = () => {
     onChangeName("");
     onChangeBarcode("");
@@ -126,73 +291,131 @@ export function NewScreen({ navigation }) {
   };
 
   const deleteAllProducts = () => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        "DELETE FROM products",
-        [],
-        (txObj, results) => {
-          clearForm();
-          Alert.alert("Productos Eliminados");
+    Alert.alert("Eliminar Todos los Productos", "¿Esta seguro?", [
+      {
+        text: "OK",
+        onPress: () => {
+          db.transaction((tx) => {
+            tx.executeSql(
+              "DELETE FROM products",
+              [],
+              (txObj, results) => {
+                clearForm();
+                Alert.alert("Productos Eliminados");
+              },
+              (txObj, error) => console.log("Error ", error)
+            );
+          });
         },
-        (txObj, error) => console.log("Error ", error)
-      );
-    });
+      },
+      {
+        text: "Cancelar",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel",
+      },
+    ]);
+  };
+  const loadFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync();
+      if (result.type === "success") {
+        const file = await FileSystem.readAsStringAsync(result.uri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        console.log(result.size);
+        const buffer = Buffer.from(file, "base64");
+        const workbook = new ExcelJS.Workbook();
+        workbook.xlsx
+          .load(buffer)
+          .then((workbook) => {
+            const worksheet = workbook.getWorksheet(1);
+            worksheet.eachRow((row, rowNumber) => {
+              console.log(row);
+              if (rowNumber > 1) {
+                db.transaction((tx) => {
+                  tx.executeSql(
+                    "INSERT INTO products (name, barcode, description, quantity, price, image) VALUES (?, ?, ?, ?, ?, ?)",
+                    [
+                      row.getCell(1).value,
+                      row.getCell(2).value,
+                      row.getCell(3).value,
+                      row.getCell(4).value,
+                      row.getCell(5).value,
+                      row.getCell(6).value,
+                    ],
+                    (txObj, results) =>
+                      console.log(`Inserted Product: ${row.getCell(1).value}`),
+                    (txObj, error) => console.log("Error ", error)
+                  );
+                });
+              }
+            });
+          })
+          .then(() => {
+            Alert.alert("Productos Cargados");
+            clearForm();
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      } else {
+        console.log(result.type);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
-    <ScrollView style={styles.container}>
-      <TextInput value={name} onChangeText={onChangeName} label="Nombre" />
+    <View>
       <TextInput
+        style={Styles.inputs}
+        value={name}
+        onChangeText={onChangeName}
+        placeholder="Nombre"
+      />
+      <TextInput
+        style={Styles.inputs}
         value={barcode}
         onChangeText={onChangeBarcode}
-        label="Codigo de Barras"
+        placeholder="Codigo de Barras"
         keyboardType="number-pad"
       />
       <TextInput
+        style={Styles.inputs}
         value={description}
         onChangeText={onChangeDescription}
-        label="Descripción"
+        placeholder="Descripción"
       />
       <TextInput
+        style={Styles.inputs}
         value={quantity}
         onChangeText={onChangeQuantity}
-        label="Número de Piezas"
+        placeholder="Número de Piezas"
         keyboardType="number-pad"
       />
       <TextInput
+        style={Styles.inputs}
         value={price}
         onChangeText={onChangePrice}
-        label="Precio"
+        placeholder="Precio"
         keyboardType="decimal-pad"
       />
       <Separator />
+      <Button title="Guardar" onPress={saveNewProduct} iconName="save" />
+      <Button title="Cargar Excel" onPress={loadFile} iconName="cloud-upload" />
       <Button
-        icon="content-save"
-        mode="outlined"
-        onPress={saveNewProduct}
-        disabled={!canSave}
-      >
-        Guardar
-      </Button>
+        title="Eliminar Todos Los Productos"
+        onPress={deleteAllProducts}
+        iconName="trash"
+      />
       <Button
-        icon="table-arrow-up"
-        mode="outlined"
-        onPress={() => console.log("Pressed")}
-      >
-        Cargar Excel
-      </Button>
-      <Button
-        icon="view-headline"
-        mode="outlined"
+        title="Ver Productos"
         onPress={() => {
-          navigation.navigate("Lista de Productos");
+          navigation.navigate("listScreen");
         }}
-      >
-        Ver Productos
-      </Button>
-      <Button icon="table-alert" mode="outlined" onPress={deleteAllProducts}>
-        Eliminar Todos Los Productos
-      </Button>
-    </ScrollView>
+        iconName="reader-outline"
+      />
+    </View>
   );
 }
 

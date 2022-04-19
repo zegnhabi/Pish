@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { FlatList, ScrollView, StyleSheet, View, Text } from "react-native";
 import { DataTable } from "react-native-paper";
 
 import * as SQLite from "expo-sqlite";
@@ -39,25 +39,31 @@ export default function Customers() {
     fetchData();
   }, []);
 
+  const items = ({ item }) => {
+    return (
+      <View>
+        <Text>{item.name}</Text>
+        <Text>{item.phone_number}</Text>
+        <Text>{item.address}</Text>
+      </View>
+    );
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <DataTable>
-        <DataTable.Header>
-          <DataTable.Title>Nombre</DataTable.Title>
-          <DataTable.Title>Tel.</DataTable.Title>
-          <DataTable.Title numeric>Dirección</DataTable.Title>
-        </DataTable.Header>
-        {customers.map((customer) => {
-          return (
-            <DataTable.Row key={customer.id}>
-              <DataTable.Cell>{customer.name}</DataTable.Cell>
-              <DataTable.Cell>{customer.phone_number}</DataTable.Cell>
-              <DataTable.Cell numeric>{customer.address}</DataTable.Cell>
-            </DataTable.Row>
-          );
-        })}
-      </DataTable>
-    </ScrollView>
+    <View
+      style={{
+        paddingTop: 0,
+        paddingHorizontal: 10,
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      <FlatList
+        data={customers}
+        renderItem={items}
+        keyExtractor={(item) => item.id}
+      />
+    </View>
   );
 }
 

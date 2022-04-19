@@ -2,10 +2,10 @@ import { React, useEffect, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { Colors, Styles } from "./styles/styles";
 import ProductsScreen from "./screens/Products/Products";
 import SalesScreen from "./screens/Sales/Sales";
 import TicketsScreen from "./screens/Tickets/Tickets";
-import CustomersScreen from "./screens/Customers/Customers";
 import * as SQLite from "expo-sqlite";
 
 function openDatabase() {
@@ -28,7 +28,6 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   useEffect(() => {
-    console.log(db);
     try {
       db.transaction((tx) => {
         tx.executeSql(
@@ -42,7 +41,7 @@ export default function App() {
           );`,
           [],
           (tx, results) => {
-            console.log("Table Customers created successfully");
+            //console.log("Table Customers created successfully");
           },
           (tx, error) => {
             console.log("Error ", error);
@@ -61,7 +60,7 @@ export default function App() {
             );`,
           [],
           (tx, results) => {
-            console.log("Table Products created successfully");
+            //console.log("Table Products created successfully");
           },
           (tx, error) => {
             console.log("Error ", error);
@@ -82,7 +81,7 @@ export default function App() {
             );`,
           [],
           (tx, results) => {
-            console.log("Table Sales created successfully");
+            //console.log("Table Sales created successfully");
           },
           (tx, error) => {
             console.log("Error ", error);
@@ -99,7 +98,7 @@ export default function App() {
             );`,
           [],
           (tx, results) => {
-            console.log("Table Tickets created successfully");
+            //console.log("Table Tickets created successfully");
           },
           (tx, error) => {
             console.log("Error ", error);
@@ -116,40 +115,7 @@ export default function App() {
             "XAXX010101000",
           ],
           (tx, results) => {
-            console.log("Table Sales created successfully");
-          },
-          (tx, error) => {
-            console.log("Error ", error);
-          }
-        );
-
-        tx.executeSql(
-          `INSERT INTO customers (name, phone_number, address, email, rfc) VALUES (?,?,?,?,?);`,
-          [
-            "José Ibáñez",
-            "+5212291460140",
-            "Olivos #415, Potrero de Anahuac, San Nicólas de los Garza, CP. 66456, NL, México",
-            "zegnhabi@gmail.com",
-            "IAPR861226FG7",
-          ],
-          (tx, results) => {
-            console.log("Table Sales created successfully");
-          },
-          (tx, error) => {
-            console.log("Error ", error);
-          }
-        );
-
-        tx.executeSql(
-          `INSERT INTO customers (name, phone_number, address, email) VALUES (?,?,?,?);`,
-          [
-            "Farid Becerra Aparicio",
-            "+5212321131512",
-            "Olivos #415, Potrero de Anahuac, San Nicólas de los Garza, CP. 66456, NL, México",
-            "igniz.01@gmail.com",
-          ],
-          (tx, results) => {
-            console.log("Table Sales created successfully");
+            //console.log("Table Sales created successfully");
           },
           (tx, error) => {
             console.log("Error ", error);
@@ -168,19 +134,19 @@ export default function App() {
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
             switch (route.name) {
-              case "Tickets":
+              case "tickets":
                 iconName = focused ? "ios-documents" : "ios-documents-outline";
                 break;
 
-              case "Productos":
+              case "products":
                 iconName = focused ? "ios-bandage" : "ios-bandage-outline";
                 break;
 
-              case "Ventas":
+              case "sales":
                 iconName = focused ? "ios-cart" : "ios-cart-outline";
                 break;
 
-              case "Clientes":
+              case "customers":
                 iconName = focused ? "ios-people" : "ios-people-outline";
                 break;
 
@@ -192,14 +158,25 @@ export default function App() {
             // You can return any component that you like here!
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: "tomato",
+          tabBarActiveTintColor: Colors.header,
           tabBarInactiveTintColor: "gray",
         })}
       >
-        <Tab.Screen name="Clientes" component={CustomersScreen} />
-        <Tab.Screen name="Ventas" component={SalesScreen} />
-        <Tab.Screen name="Tickets" component={TicketsScreen} />
-        <Tab.Screen name="Productos" component={ProductsScreen} />
+        <Tab.Screen
+          name="sales"
+          component={SalesScreen}
+          options={Styles.headerTabs("Ventas")}
+        />
+        <Tab.Screen
+          name="tickets"
+          component={TicketsScreen}
+          options={Styles.headerTabs("Tickets")}
+        />
+        <Tab.Screen
+          name="products"
+          component={ProductsScreen}
+          options={Styles.headerTabs("Productos")}
+        />
       </Tab.Navigator>
     </NavigationContainer>
   );
