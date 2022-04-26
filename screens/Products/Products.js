@@ -7,7 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Text,
-  Dimensions,
+  ScrollView,
 } from "react-native";
 import * as SQLite from "expo-sqlite";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -17,8 +17,8 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import ExcelJS from "exceljs";
 import { Buffer } from "buffer";
-//import Barcode from "@kichiyaki/react-native-barcode-generator";
 
+//import Barcode from "@kichiyaki/react-native-barcode-generator";
 const Separator = () => <View style={styles.separator} />;
 const Stack = createNativeStackNavigator();
 
@@ -315,6 +315,93 @@ export function NewScreen({ navigation }) {
       },
     ]);
   };
+
+  const deleteAllTables = () => {
+    Alert.alert("Eliminar Todos las Tablas", "¿Esta seguro?", [
+      {
+        text: "OK",
+        onPress: () => {
+          db.transaction(
+            (tx) => {
+              tx.executeSql(
+                "DROP TABLE customers;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Customers Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE devices;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Devices Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE locations;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Locations Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE payments;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Payments Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE products;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Products Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE sales;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Sales Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+
+              tx.executeSql(
+                "DROP TABLE tickets;",
+                [],
+                (txObj, results) => {
+                  //console.log("Tablas Tickets Eliminada");
+                },
+                (txObj, error) => console.log("Error ", error)
+              );
+            },
+            (err) => {
+              console.log("Error ", err);
+            },
+            () => {
+              console.log("All tables were deleted");
+            }
+          );
+        },
+      },
+      {
+        text: "Cancelar",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel",
+      },
+    ]);
+  };
   const loadFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync();
@@ -366,7 +453,7 @@ export function NewScreen({ navigation }) {
     }
   };
   return (
-    <View>
+    <ScrollView>
       <TextInput
         style={Styles.inputs}
         value={name}
@@ -409,13 +496,18 @@ export function NewScreen({ navigation }) {
         iconName="trash"
       />
       <Button
+        title="Eliminar Todas Las Tablas"
+        onPress={deleteAllTables}
+        iconName="trash"
+      />
+      <Button
         title="Ver Productos"
         onPress={() => {
           navigation.navigate("listScreen");
         }}
         iconName="reader-outline"
       />
-    </View>
+    </ScrollView>
   );
 }
 
