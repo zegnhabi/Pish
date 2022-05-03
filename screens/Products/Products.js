@@ -9,7 +9,6 @@ import {
   Text,
   ScrollView,
 } from "react-native";
-import * as SQLite from "expo-sqlite";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Colors, Styles } from "../../styles/styles";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -17,8 +16,8 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system";
 import ExcelJS from "exceljs";
 import { Buffer } from "buffer";
+import { openDatabase } from "../../provider/db/sqlite";
 
-//import Barcode from "@kichiyaki/react-native-barcode-generator";
 const Separator = () => <View style={styles.separator} />;
 const Stack = createNativeStackNavigator();
 
@@ -62,21 +61,6 @@ const Button = ({ title, onPress, iconName }) => (
   </TouchableOpacity>
 );
 
-function openDatabase() {
-  if (Platform.OS === "web") {
-    return {
-      transaction: () => {
-        return {
-          executeSql: () => {},
-        };
-      },
-    };
-  }
-
-  const db = SQLite.openDatabase("Pish.db");
-  return db;
-}
-
 const db = openDatabase();
 export default function Products({ navigation }) {
   return (
@@ -98,6 +82,7 @@ export default function Products({ navigation }) {
     </Stack.Navigator>
   );
 }
+
 function ListScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -122,89 +107,136 @@ function ListScreen({ navigation }) {
 
   const items = ({ item }) => (
     <View
+      key={item.id}
       style={{
-        flex: 1,
-        borderColor: Colors.title,
-        borderWidth: 0.5,
-        padding: 5,
-        backgroundColor: Colors.white,
+        height: 40,
+        flexDirection: "row",
+        borderBottomWidth: 0.2,
       }}
     >
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: "bold",
-        }}
-      >
-        {item.name}
-      </Text>
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* <Barcode
-          style={{
-            fontSize: 5,
-          }}
-          format="CODE128B"
-          value={item.barcode}
-          text={item.barcode}
-          width={1.25}
-          height={25}
-        /> */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <Text
-            style={{
-              fontWeight: "bold",
-            }}
-          >
-            {" "}
-            Código:
-          </Text>
-          <Text>{item.barcode}</Text>
-          <Text
-            style={{
-              fontWeight: "bold",
-            }}
-          >
-            {" "}
-            Piezas:
-          </Text>
-          <Text>{item.quantity}</Text>
-          <Text
-            style={{
-              fontWeight: "bold",
-            }}
-          >
-            {" "}
-            Precio:
-          </Text>
-          <Text>${item.price}</Text>
-        </View>
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
+          alignContent: "center",
+          marginVertical: 5,
+          width: "90%",
         }}
       >
         <Text
           style={{
+            fontSize: 14,
             fontWeight: "bold",
           }}
         >
-          {" "}
-          Descripción:
+          {item.name}
         </Text>
-        <Text>{item.description}</Text>
+        <View>
+          <Text>
+            Código:
+            {item.barcode} ${item.price}
+          </Text>
+        </View>
       </View>
+      {/* <TouchableOpacity
+        style={{
+          margin: 5,
+        }}
+        onPress={() =>
+          onAddProduct({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            barcode: item.barcode,
+            quantity: 1,
+          })
+        }
+      >
+        <Ionicons name="add-circle" size={32} color="green" />
+      </TouchableOpacity> */}
     </View>
+    // <View
+    //   style={{
+    //     flex: 1,
+    //     borderColor: Colors.title,
+    //     borderWidth: 0.5,
+    //     padding: 5,
+    //     backgroundColor: Colors.white,
+    //   }}
+    // >
+    //   <Text
+    //     style={{
+    //       fontSize: 20,
+    //       fontWeight: "bold",
+    //     }}
+    //   >
+    //     {item.name}
+    //   </Text>
+    //   <View
+    //     style={{
+    //       flexDirection: "row",
+    //       justifyContent: "space-between",
+    //     }}
+    //   >
+    //     {/* <Barcode
+    //       style={{
+    //         fontSize: 5,
+    //       }}
+    //       format="CODE128B"
+    //       value={item.barcode}
+    //       text={item.barcode}
+    //       width={1.25}
+    //       height={25}
+    //     /> */}
+    //     <View
+    //       style={{
+    //         flexDirection: "row",
+    //         justifyContent: "space-between",
+    //       }}
+    //     >
+    //       <Text
+    //         style={{
+    //           fontWeight: "bold",
+    //         }}
+    //       >
+    //         {" "}
+    //         Código:
+    //       </Text>
+    //       <Text>{item.barcode}</Text>
+    //       <Text
+    //         style={{
+    //           fontWeight: "bold",
+    //         }}
+    //       >
+    //         {" "}
+    //         Piezas:
+    //       </Text>
+    //       <Text>{item.quantity}</Text>
+    //       <Text
+    //         style={{
+    //           fontWeight: "bold",
+    //         }}
+    //       >
+    //         {" "}
+    //         Precio:
+    //       </Text>
+    //       <Text>${item.price}</Text>
+    //     </View>
+    //   </View>
+    //   <View
+    //     style={{
+    //       flexDirection: "row",
+    //     }}
+    //   >
+    //     <Text
+    //       style={{
+    //         fontWeight: "bold",
+    //       }}
+    //     >
+    //       {" "}
+    //       Descripción:
+    //     </Text>
+    //     <Text>{item.description}</Text>
+    //   </View>
+    // </View>
   );
   const onChangeBuscar = (text) => {
     if (text === "") {
